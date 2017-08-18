@@ -1,0 +1,29 @@
+# Gradle
+build
+gradle.properties
+.gradle
+local.properties
+
+# Maven (examples)
+target
+
+# IntelliJ IDEA
+.idea
+*.iml
+.log
+logs
+generatorConfig.xml
+generator.properties
+
+# Eclipse
+.classpath
+.project
+.settings
+bin
+
+# OS X
+.DS_Store
+
+# Emacs
+*~
+\#*\#

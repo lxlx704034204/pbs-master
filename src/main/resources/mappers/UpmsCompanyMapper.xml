@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pbs.ams.web.mappers.UpmsCompanyMapper">
+  <resultMap id="BaseResultMap" type="com.pbs.ams.web.model.UpmsCompany">
+    <id column="company_id" jdbcType="BIGINT" property="companyId" />
+    <result column="company_name" jdbcType="VARCHAR" property="companyName" />
+    <result column="operator_id" jdbcType="BIGINT" property="operatorId" />
+    <result column="manager_id" jdbcType="BIGINT" property="managerId" />
+    <result column="manager_phone" jdbcType="VARCHAR" property="managerPhone" />
+    <result column="manager_address" jdbcType="VARCHAR" property="managerAddress" />
+    <result column="company_address" jdbcType="VARCHAR" property="companyAddress" />
+    <result column="company_fax" jdbcType="VARCHAR" property="companyFax" />
+    <result column="manager_email" jdbcType="VARCHAR" property="managerEmail" />
+    <result column="description" jdbcType="VARCHAR" property="description" />
+    <result column="create_time" jdbcType="BIGINT" property="createTime" />
+    <result column="update_time" jdbcType="BIGINT" property="updateTime" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    company_id, company_name, operator_id, manager_id, manager_phone, manager_address,
+    company_address, company_fax, manager_email, description, create_time, update_time
+  </sql>
+  <!-- 根据条件模糊查询公司-->
+  <select id="listCompanies" parameterType="java.util.HashMap" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from upms_company where 1 = 1
+    <if test="companyIds != null">
+      and company_id in
+      <foreach collection="companyIds" index="index" item="item" open="(" separator="," close=")">
+        #{item}
+      </foreach>
+    </if>
+    <if test="companyName != null">
+      and company_name LIKE '%${companyName}%'
+    </if>
+    <if test="managerPhone != null">
+      and manager_phone LIKE '%${managerPhone}%'
+    </if>
+    <if test="limit != null">
+      <if test="offset != null">
+        limit ${offset}, ${limit}
+      </if>
+      <if test="offset == null">
+        limit ${limit}
+      </if>
+    </if>
+  </select>
+  <!--根据公司id查询单个公司-->
+  <select id="getCompany" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from upms_company
+    where company_id = #{companyId,jdbcType=BIGINT}
+  </select>
+  <!--根据条件批量删除公司-->
+  <delete id="deleteCompany" parameterType="java.util.ArrayList">
+    delete from upms_company
+    where company_id in
+    <foreach collection="ids" item="item" index="index" open="(" close=")" separator=",">
+      #{companyId,jdbcType=BIGINT}
+    </foreach>
+  </delete>
+  <!--根据id删除公司-->
+  <delete id="deleteCompanyById" parameterType="java.lang.Long">
+    delete from upms_company
+    where company_id = #{companyId,jdbcType=BIGINT}
+  </delete>
+  <!--插入新公司-->
+  <insert id="insertCompany" parameterType="com.pbs.ams.web.model.UpmsCompany">
+    insert into upms_company
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="companyId != null">
+        company_id,
+      </if>
+      <if test="companyName != null">
+        company_name,
+      </if>
+      <if test="operatorId != null">
+        operator_id,
+      </if>
+      <if test="managerId != null">
+        manager_id,
+      </if>
+      <if test="managerPhone != null">
+        manager_phone,
+      </if>
+      <if test="managerAddress != null">
+        manager_address,
+      </if>
+      <if test="companyAddress != null">
+        company_address,
+      </if>
+      <if test="companyFax != null">
+        company_fax,
+      </if>
+      <if test="managerEmail != null">
+        manager_email,
+      </if>
+      <if test="description != null">
+        description,
+      </if>
+      create_time,
+      update_time,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="companyId != null">
+        #{companyId,jdbcType=BIGINT},
+      </if>
+      <if test="companyName != null">
+        #{companyName,jdbcType=VARCHAR},
+      </if>
+      <if test="operatorId != null">
+        #{operatorId,jdbcType=BIGINT},
+      </if>
+      <if test="managerId != null">
+        #{managerId,jdbcType=BIGINT},
+      </if>
+      <if test="managerPhone != null">
+        #{managerPhone,jdbcType=INTEGER},
+      </if>
+      <if test="managerAddress != null">
+        #{managerAddress,jdbcType=VARCHAR},
+      </if>
+      <if test="companyAddress != null">
+        #{companyAddress,jdbcType=VARCHAR},
+      </if>
+      <if test="companyFax != null">
+        #{companyFax,jdbcType=VARCHAR},
+      </if>
+      <if test="managerEmail != null">
+        #{managerEmail,jdbcType=VARCHAR},
+      </if>
+      <if test="description != null">
+        #{description,jdbcType=VARCHAR},
+      </if>
+      CAST(DATE_FORMAT(CURRENT_TIMESTAMP(3),'%Y%m%d%H%i%S%f')/1000 AS UNSIGNED),
+      CAST(DATE_FORMAT(CURRENT_TIMESTAMP(3),'%Y%m%d%H%i%S%f')/1000 AS UNSIGNED),
+    </trim>
+  </insert>
+  <!--计数公司总数-->
+  <select id="countCompany" parameterType="java.util.HashMap" resultType="java.lang.Integer">
+    select count(1) from upms_company where 1 = 1
+    <if test="companyIds != null">
+      and company_id in
+      <foreach collection="companyIds" index="index" item="item" open="(" separator="," close=")">
+        #{item}
+      </foreach>
+    </if>
+    <if test="companyName != null">
+      and company_name LIKE '%${companyName}%'
+    </if>
+    <if test="managerPhone != null">
+      and manager_phone LIKE '%${managerPhone}%'
+    </if>
+  </select>
+  <!--更新公司-->
+  <update id="updateCompany" parameterType="com.pbs.ams.web.model.UpmsCompany">
+    update upms_company
+    <set>
+      <if test="companyName != null">
+        company_name = #{companyName,jdbcType=VARCHAR},
+      </if>
+      <if test="operatorId != null">
+        operator_id = #{operatorId,jdbcType=BIGINT},
+      </if>
+      <if test="managerId != null">
+        manager_id = #{managerId,jdbcType=BIGINT},
+      </if>
+      <if test="managerPhone != null">
+        manager_phone = #{managerPhone,jdbcType=INTEGER},
+      </if>
+      <if test="managerAddress != null">
+        manager_address = #{managerAddress,jdbcType=VARCHAR},
+      </if>
+      <if test="companyAddress != null">
+        company_address = #{companyAddress,jdbcType=VARCHAR},
+      </if>
+      <if test="companyFax != null">
+        company_fax = #{companyFax,jdbcType=VARCHAR},
+      </if>
+      <if test="managerEmail != null">
+        manager_email = #{managerEmail,jdbcType=VARCHAR},
+      </if>
+      <if test="description != null">
+        description = #{description,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null">
+        create_time = CAST(DATE_FORMAT(CURRENT_TIMESTAMP(3),'%Y%m%d%H%i%S%f')/1000 AS UNSIGNED),
+      </if>
+      update_time = CAST(DATE_FORMAT(CURRENT_TIMESTAMP(3),'%Y%m%d%H%i%S%f')/1000 AS UNSIGNED),
+    </set>
+    where company_id = #{companyId,jdbcType=BIGINT}
+  </update>
+  <!-- insert snapshot-->
+  <insert id="insertSnapshot" parameterType="com.pbs.ams.web.model.UpmsCompanySnapshot">
+    insert into upms_company_snaps (company_id, company_name, operator_id,
+    manager_id, manager_phone, manager_address,
+    company_address, company_fax, manager_email,
+    description, create_time, update_time,
+    snaps_time)
+    values (#{companyId,jdbcType=BIGINT}, #{companyName,jdbcType=VARCHAR}, #{operatorId,jdbcType=BIGINT},
+    #{managerId,jdbcType=BIGINT}, #{managerPhone,jdbcType=INTEGER}, #{managerAddress,jdbcType=VARCHAR},
+    #{companyAddress,jdbcType=VARCHAR}, #{companyFax,jdbcType=VARCHAR}, #{managerEmail,jdbcType=VARCHAR},
+    #{description,jdbcType=VARCHAR}, #{createTime,jdbcType=BIGINT}, #{updateTime,jdbcType=BIGINT},
+    CAST(DATE_FORMAT(CURRENT_TIMESTAMP(3),'%Y%m%d%H%i%S%f')/1000 AS UNSIGNED))
+  </insert>
+
+  <!--根据公司id查询单个公司-->
+  <select id="selectCompanyByUserId" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select
+      uc.company_id,uc.company_name
+    from upms_company uc
+    left join upms_company_user ucu on uc.company_id = ucu.company_id
+    where ucu.user_id = #{userId}
+  </select>
+  <!-- end snapshot-->
+  <cache type="org.mybatis.caches.ehcache.LoggingEhcache" />
+</mapper>

@@ -1,0 +1,129 @@
+package com.pbs.ams.common.util;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.pbs.ams.common.constant.GeneratorEnum;
+import org.apache.velocity.VelocityContext;
+import org.mybatis.generator.api.MyBatisGenerator;
+import org.mybatis.generator.config.Configuration;
+import org.mybatis.generator.config.xml.ConfigurationParser;
+import org.mybatis.generator.internal.DefaultShellCallback;
+
+import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Mybatis代码生成类
+ * Created by ams on 2017/6/10.
+ * @author TiAmo
+ * 如果要生成的mapper.xml存在 内容会被追加,如果需要重写切记备份后手动删除原文件.
+ * 如果要生成的service/serviceImpl存在,不会被覆盖.
+ * 如果要生成的model存在,会被重写.如需原文件请注意备份.
+ */
+public class MybatisGeneratorUtil {
+
+	/**
+	 * 根据模板生成generatorConfig.xml文件
+	 */
+	private static void generator(List<Map<String, String>> lstTables) throws Exception {
+
+		File xmlFile = new File(GeneratorEnum.XML_PATH.getValue());
+		if (xmlFile.exists()){
+			FileUtil.deleteDir(xmlFile);
+			System.out.println("========== 删除原有generatorConfig.xml文件 ==========");
+		}
+		System.out.println("========== 开始生成generatorConfig.xml文件 ==========");
+		try {
+			VelocityContext context = new VelocityContext();
+			context.put("listTables", lstTables);
+			context.put("model_target_package", GeneratorEnum.PACKAGE_NAME.getValue()+".model");	//model生成
+			context.put("xml_target_package","mappers");											//MapperXML生成
+			context.put("mapper_target_package",GeneratorEnum.PACKAGE_NAME.getValue()+".mappers");	//Mapper接口生成
+			context.put("targetProject_java", GeneratorEnum.TARGET_PROJECT_JAVA.getValue());		//副包名："src/main/java"
+			context.put("targetProject_resource", GeneratorEnum.TARGET_PROJECT_RESOUCE.getValue());	//资源名："src/main/resources"
+			context.put("jdbc_password", GeneratorEnum.JDBC_PASSWORD.getByAESDecode());
+			VelocityUtil.generate(GeneratorEnum.GENERATORCONFIG_VM.getValue(), GeneratorEnum.XML_PATH.getValue(), context);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		System.out.println("========== 结束生成generatorConfig.xml文件 ==========");
+
+		System.out.println("========== 开始运行MybatisGenerator ==========");
+		List<String> warnings = new ArrayList<>();
+		File configFile = new File(GeneratorEnum.XML_PATH.getValue());
+		ConfigurationParser cp = new ConfigurationParser(warnings);
+		Configuration config = cp.parseConfiguration(configFile);
+		DefaultShellCallback callback = new DefaultShellCallback(true);
+		MyBatisGenerator myBatisGenerator = new MyBatisGenerator(config, callback, warnings);
+		myBatisGenerator.generate(null);
+		for (String warning : warnings) {
+			System.out.println(warning);
+		}
+		System.out.println("========== 结束运行MybatisGenerator ==========");
+
+		System.out.println("========== 开始生成Service ==========");
+		String ctime = new SimpleDateFormat("yyyy/M/d").format(new Date());
+		String servicePath = GeneratorEnum.CREATE_SERVICE_PATH.getValue();			//"src/main/java/com/pbs/ams/web/service"
+		String serviceImplPath = GeneratorEnum.CREATE_SERVICEIMPL_PATH.getValue();	//"src/main/java/com/pbs/ams/web/service/impl"
+		File servicePathFile = new File(servicePath);
+		File serviceImplPathFile = new File(serviceImplPath);
+
+		if (servicePathFile.exists()) {
+			servicePathFile.mkdirs();
+		}
+		if (!serviceImplPathFile.exists()) {
+			serviceImplPathFile.mkdirs();
+		}
+
+		for (Map<String, String> lstTable : lstTables) {
+			if (!"1".equals(lstTable.get("create_service"))){
+				continue;
+			}
+			String tbName = lstTable.get("table_name");
+			String modelName = StringUtil.lineToHump(tbName);
+			String service = servicePath + "/" + modelName + "Service.java";
+			String serviceImpl = serviceImplPath + "/" + modelName + "ServiceImpl.java";
+			// 生成service
+			File serviceFile = new File(service);
+			if (!serviceFile.exists()) {
+				VelocityContext context = new VelocityContext();
+				context.put("package_name", GeneratorEnum.PACKAGE_NAME.getValue());				//"com.pbs.ams.web"
+				context.put("model", modelName);
+				context.put("ctime", ctime);
+				VelocityUtil.generate(GeneratorEnum.SERVICE_VM.getValue(), service, context);	//"template/Service.vm"
+				System.out.println(service);
+			}
+			// 生成serviceImpl
+			File serviceImplFile = new File(serviceImpl);
+			if (!serviceImplFile.exists()) {
+				VelocityContext context = new VelocityContext();
+				context.put("package_name", GeneratorEnum.PACKAGE_NAME.getValue());
+				context.put("model", modelName);
+				context.put("mapper", StringUtil.toLowerCaseFirstOne(modelName));
+				context.put("ctime", ctime);
+				VelocityUtil.generate(GeneratorEnum.SERVICEIMPL_VM.getValue(), serviceImpl, context);
+				System.out.println(serviceImpl);
+			}
+		}
+		System.out.println("========== 结束生成Service ==========");
+	}
+
+	/**
+	 * 走你
+	 * @create_service: 传参1则生成service 否则不生成
+	 */
+	public static void main(String[] args) throws Exception {
+		List<Map<String, String>> lstTables = Lists.newArrayList();
+
+		Map<String, String> map1 = Maps.newHashMap();
+//		map1.put("table_name","upms_company"); //"ams_trade_fee_template_snaps"
+		map1.put("table_name","tb_user"); //
+//		map1.put("create_service","1"); // 此条放行 则会生成 service层，否则不生成！
+		lstTables.add(map1);
+		MybatisGeneratorUtil.generator(lstTables);
+	}
+}
